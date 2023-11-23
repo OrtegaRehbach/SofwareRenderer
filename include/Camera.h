@@ -1,6 +1,7 @@
 #pragma once
 
 #include "glm/glm.hpp"
+#include "glm/gtc/quaternion.hpp"
 
 struct Camera {
     glm::vec3 cameraPosition;
@@ -23,12 +24,13 @@ struct Camera {
     }
 
     // Function to rotate the camera horizontally (left or right)
-    void Rotate(float angleRadians) {
-        // Rotate the camera around its own up vector
-        glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), angleRadians, upVector);
-        // Update the target position and right vector
-        targetPosition = cameraPosition + glm::mat3(rotationMatrix) * (targetPosition - cameraPosition);
-        rightVector = glm::normalize(glm::cross(targetPosition - cameraPosition, upVector));
+    void Rotate(float deltaX, float deltaY) {
+        float rotationSpeed = 1.0f;    
+        glm::quat quatRotY = glm::angleAxis(glm::radians(deltaX * rotationSpeed), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::quat quatRotX = glm::angleAxis(glm::radians(deltaY * rotationSpeed), glm::vec3(1.0f, 0.0f, 0.0f));
+
+        cameraPosition = targetPosition + quatRotY * (cameraPosition - targetPosition);
+        cameraPosition = targetPosition + quatRotX * (cameraPosition - targetPosition);
         updateViewDirection();
     }
 
