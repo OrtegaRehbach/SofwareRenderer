@@ -4,6 +4,7 @@
 #include <array>
 #include <sstream>
 #include <functional>
+#include <random>
 
 #include "globals.h"
 #include "ObjLoader.h"
@@ -101,31 +102,52 @@ void render(std::vector<glm::vec3> vertexBufferObject, Camera camera) {
     }
 }
 
-std::vector<Fragment> getStarFragments(int amount) {
-    std::vector<Fragment> starFragments;
-    for (int i = 0; i < amount; i++) {
-        int x = rand() % SCREEN_WIDTH;
-        int y = rand() % SCREEN_HEIGHT;
-        float z = 9999.0f;
+float generateRandomNormal(float mean = 0.0f, float stddev = 1.0f) {
+    // Set up a random engine and distribution
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::normal_distribution<float> distribution(mean, stddev);
 
-        Color starColor = Color();
-
-        Fragment starFragment = Fragment(
-            static_cast<float>(x),
-            static_cast<float>(y),
-            z,
-            starColor
-        );
-
-        starFragments.push_back(starFragment);
-    }
-    
-    return starFragments;
+    // Generate and return a random value
+    return distribution(gen);
 }
 
-void drawStars(std::vector<Fragment> starFragments) {
-    for (Fragment star : starFragments) {
-        point(star);
+std::vector<glm::vec3> generateStars() {
+    int amount = 1000;
+    float radius = 500.0f;
+    std::vector<glm::vec3> starVertices;
+    for (int i = 0; i < amount; i++) {
+        float x = generateRandomNormal();
+        float y = generateRandomNormal();
+        float z = generateRandomNormal();
+        if (x == 0 && y == 0 && z == 0) {
+            i--;
+            continue;
+        }
+        glm::vec3 starVertex(x, y, z);
+        starVertex = glm::normalize(starVertex) * radius;
+        starVertices.push_back(starVertex);
+    }
+    return starVertices;
+}
+
+void drawStars(const std::vector<glm::vec3>& starVertices, const Uniforms& uniforms) {
+    for (auto& star : starVertices) {
+        // Apply transformations to the star using the matrices from the uniforms
+        glm::vec4 clipSpaceVertex = uniforms.projection * uniforms.view * uniforms.model * glm::vec4(star, 1.0f);
+        // Perspective divide
+        glm::vec3 ndcVertex = glm::vec3(clipSpaceVertex) / clipSpaceVertex.w;
+        // Apply the viewport transform
+        glm::vec4 screenStar = uniforms.viewport * glm::vec4(ndcVertex, 1.0f);
+
+        Fragment starFragment{
+            glm::vec3(screenStar.x, screenStar.y, 9999.0f),
+            Color(),
+            1.0f,
+            glm::vec3(screenStar),
+            star
+        };
+        point(starFragment);
     }
 }
 
@@ -155,7 +177,7 @@ int main() {
     const float cameraMovementSpeed = 0.1f;
     const float horizontalRotationSpeed = 0.02f;
 
-    std::vector<Fragment> starFragments = getStarFragments(100);
+    std::vector<glm::vec3> stars = generateStars();
 
     std::vector<glm::vec3> VBO = setupVertexBufferObject(vertices, normals, faces);
     std::vector<glm::vec3> VBO_ship = setupVertexBufferObject(shipVertices, shipNormals, shipFaces);
@@ -195,11 +217,11 @@ int main() {
                 }
                 else if (event.key.keysym.sym == SDLK_q) {
                     // Rotate the camera left (orbit)
-                    camera.Rotate(horizontalRotationSpeed);
+                    camera.Rotate(1.0f, 0.0f);
                 }
                 else if (event.key.keysym.sym == SDLK_e) {
                     // Rotate the camera right (orbit)
-                    camera.Rotate(-horizontalRotationSpeed);
+                    camera.Rotate(-1.0f, 0.0f);
                 }
             }
         }        
@@ -207,16 +229,18 @@ int main() {
         // Clear the buffer
         clear();
 
-        // Render big planet
+
         // Calculate matrixes for rendering
-        uniforms.model = createModelMatrix(glm::vec3(1.5), glm::vec3(0, 0, 0), rotation += 0.06f);
         uniforms.view = createViewMatrix(camera);
         uniforms.projection = createProjectionMatrix(SCREEN_WIDTH, SCREEN_HEIGHT);
         uniforms.viewport = createViewportMatrix(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-        drawStars(starFragments);
+        // Star sphere model matrix
+        uniforms.model = createModelMatrix(glm::vec3(1000), glm::vec3(0));
+        drawStars(stars, uniforms);
 
-        // Call render() function
+        // Render big planet
+        uniforms.model = createModelMatrix(glm::vec3(1), glm::vec3(0, 0, 0), rotation += 0.06f);
         activeShader = earthPlanetFragmentShader;  // Set active shader to striped planet shader
         render(VBO, camera);    // Big planet
         
