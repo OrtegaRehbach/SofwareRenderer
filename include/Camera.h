@@ -23,6 +23,19 @@ struct Camera {
         viewDirection = glm::normalize(targetPosition - cameraPosition);
     }
 
+    // Calculate the rotation quaternion from world space forward to view direction
+    glm::quat calculateRotationQuat() const {
+        return glm::quatLookAt(viewDirection, upVector);
+    }
+
+    // Get the rotation quaternion
+    glm::quat getCameraRotation() const {
+        glm::quat rotationQuat = calculateRotationQuat();
+        // Add a 180-degree rotation around the up vector
+        rotationQuat *= glm::angleAxis(glm::radians(180.0f), upVector);
+        return rotationQuat;
+    }
+
     // Function to rotate the camera horizontally (left or right)
     void Rotate(float deltaX, float deltaY) {
         float rotationSpeed = 1.0f;    

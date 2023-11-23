@@ -229,6 +229,8 @@ int main() {
         // Clear the buffer
         clear();
 
+        // Get the rotation quaternion
+        glm::quat cameraRotation = camera.getCameraRotation();
 
         // Calculate matrixes for rendering
         uniforms.view = createViewMatrix(camera);
@@ -261,12 +263,13 @@ int main() {
 
 
         // Render ship
-        // glm::vec3 targetOffset = glm::vec3(0, 0.4, 2);
-        // glm::mat4 shipRotationMatrix = glm::rotate(glm::mat4(1.0f), horizontalRotationSpeed, glm::vec3(0, 1, 0));
-        // uniforms.model = createModelMatrix(glm::vec3(0.1), camera.targetPosition - targetOffset, 1.57);
+        glm::vec3 targetOffset = glm::vec3(0, 0.4, 0);
+        uniforms.model = createModelMatrix(glm::vec3(0.1), camera.targetPosition - targetOffset, 1.57);
+        // Apply the camera's rotation to the ship's model matrix
+        uniforms.model *= glm::mat4_cast(cameraRotation);
 
-        // activeShader = shipFragmentShader;
-        // render(VBO_ship, camera);
+        activeShader = shipFragmentShader;
+        render(VBO_ship, camera);
 
         // Present the framebuffer to the screen
         SDL_RenderPresent(renderer);
