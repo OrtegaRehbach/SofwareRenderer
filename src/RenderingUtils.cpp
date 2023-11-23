@@ -237,7 +237,7 @@ bool isInsideScreen(const Fragment& fragment, int SCREEN_WIDTH, int SCREEN_HEIGH
 bool isInsideScreen(int x, int y, int SCREEN_WIDTH, int SCREEN_HEIGHT) {
     return (
         x >= 0 && x < SCREEN_WIDTH &&
-        y > 0 && y <= SCREEN_HEIGHT
+        y >= 0 && y < SCREEN_HEIGHT
     );
 }
 
