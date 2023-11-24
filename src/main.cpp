@@ -181,6 +181,7 @@ int main() {
     Planet* earth       = new Planet(VBO_sphere, glm::vec3(10), glm::vec3(80, 0, 0), earthPlanetFragmentShader, 0.05f, -0.007f, 80.0f);
     Planet* moon        = new Planet(VBO_sphere, glm::vec3(2), glm::vec3(100, 2, 0), moonFragmentShader, 0.01f, 0.05f, 20.0f, earth->position);
     Planet* gas_giant   = new Planet(VBO_sphere, glm::vec3(18), glm::vec3(120, 0, 0), stripedPlanetFragmentShader, 0.04f, 0.0005f, 120.0f);
+    Planet* red_planet  = new Planet(VBO_sphere, glm::vec3(25), glm::vec3(180, 0, 0), redPlanetFragmentShader, 0.06f, 0.01f, 180.0f);
 
     float rotation = 0.0f;
     float moonRotation = 0.0f;
@@ -265,6 +266,12 @@ int main() {
         activeShader = gas_giant->shader;
         render(gas_giant->vertexBufferObject, camera);
         gas_giant->update();
+
+        // Render red_planet
+        uniforms.model = red_planet->getModelMatrix();
+        activeShader = red_planet->shader;
+        render(red_planet->vertexBufferObject, camera);
+        red_planet->update();
 
         // Render ship
         glm::vec3 targetOffset = glm::vec3(0, 0.4, 0);

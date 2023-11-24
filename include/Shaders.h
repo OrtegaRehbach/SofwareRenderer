@@ -12,5 +12,6 @@ Fragment stripedPlanetFragmentShader(const Fragment& fragment);
 Fragment earthPlanetFragmentShader(const Fragment& fragment);
 Fragment moonFragmentShader(const Fragment& fragment);
 Fragment starFragmentShader(const Fragment& fragment);
+Fragment redPlanetFragmentShader(const Fragment& fragment);
 Fragment testFragmentShader(const Fragment& fragment);
 Fragment shipFragmentShader(const Fragment& fragment);

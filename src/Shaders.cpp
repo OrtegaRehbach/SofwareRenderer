@@ -145,7 +145,7 @@ Fragment starFragmentShader(const Fragment& fragment) {
 
     // Create a FastNoiseLite instance for generating noise
     FastNoiseLite noise;
-    noise.SetSeed(123);  // You can set any seed value
+    noise.SetSeed(123);
 
     // Scale the coordinates to control the noise pattern
     float scale = 1600.0f;
@@ -164,6 +164,29 @@ Fragment starFragmentShader(const Fragment& fragment) {
     return shadedFragment;
 }
 
+Fragment redPlanetFragmentShader(const Fragment& fragment) {
+    glm::vec3 fragmentPosition(fragment.x, fragment.y, fragment.z);
+    FastNoiseLite noise;
+    noise.SetSeed(123);
+    Color baseColor = Color(255, 0, 0);
+    Color highLightColor = Color(0, 255, 255);
+
+    float intensity = fragment.intensity;
+
+    float xPos = fragment.originalPosition.x;
+    float yPos = fragment.originalPosition.y;
+    
+    float scale = 400.0f;
+    float noiseValue = noise.GetNoise(fragment.originalPosition.x * scale, fragment.originalPosition.y * scale, fragment.originalPosition.z * scale);
+    noiseValue += 1.0f;
+    noiseValue *= 0.5f;
+    
+    Color fragmentColor = baseColor * noiseValue + highLightColor * (1 - noiseValue + 0.1f);
+
+    Fragment shadedFragment = Fragment(fragmentPosition, fragmentColor * intensity);
+    
+    return shadedFragment;
+}
 
 Fragment testFragmentShader(const Fragment& fragment) {
     glm::vec3 fragmentPosition(fragment.x, fragment.y, fragment.z);
