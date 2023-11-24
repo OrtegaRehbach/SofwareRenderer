@@ -3,7 +3,7 @@
 // glm::vec3 L(0.0f, 0.0f, 1.0f);   // Straight light
 // glm::vec3 L(0.5f, -1.0f, 1.0f);  // Diagonal light
 // glm::vec3 L(1.0f, 0.0f, 1.0f);  // Horizontal light (right)
-glm::vec3 L(1.0f, 0.0f, 0.0f);
+glm::vec3 L(0.0f, 0.0f, 0.0f);
 
 void drawPoint(SDL_Renderer* renderer, float x_position, float y_position, const Color& color) {    
     SDL_SetRenderDrawColor(renderer, color.red, color.green, color.blue, SDL_ALPHA_OPAQUE);
@@ -122,7 +122,8 @@ std::vector<Fragment> getTriangleFragments(Vertex a, Vertex b, Vertex c, const i
                 glm::vec3 originalPosition = a.originalPos * u + b.originalPos * v + c.originalPos * w;                
             
                 // Calculate intensity
-                float intensity = glm::dot(normal, glm::normalize(L - worldPosition));
+                glm::vec3 lightDirection = glm::normalize(L - worldPosition);
+                float intensity = glm::dot(normal, lightDirection);
                 intensity = (intensity < 0) ? abs(intensity) : 0.0f;    // Truncate the value for normals facing opposite of L
 
                 // Backface culling
@@ -310,4 +311,3 @@ glm::vec3 calculateTriangleNormal(glm::vec3 A,glm::vec3 B, glm::vec3 C) {
 
     return normal;
 }
-

@@ -13,6 +13,7 @@
 #include "Uniform.h"
 #include "RenderingUtils.h"
 #include "Shaders.h"
+#include "planet.h"
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
@@ -156,31 +157,30 @@ int main() {
     if (!init()) { return 1; }
     
     // Read from .obj file and store the vertices/faces
-    std::vector<glm::vec3> vertices;
-    std::vector<glm::vec3> normals;
-    std::vector<Face> faces;
-
-    bool loadModel = true;
-    if (loadModel) {
-        loadOBJ("../models/sphere.obj", vertices, normals, faces);
-    }
+    std::vector<glm::vec3> sphereVertices;
+    std::vector<glm::vec3> sphereNormals;
+    std::vector<Face> sphereFaces;
+    loadOBJ("../models/sphere.obj", sphereVertices, sphereNormals, sphereFaces);
 
     std::vector<glm::vec3> shipVertices;
     std::vector<glm::vec3> shipNormals;
     std::vector<Face> shipFaces;
+    loadOBJ("../models/Lab3_Ship.obj", shipVertices, shipNormals, shipFaces);
 
-    if (loadModel) {
-        loadOBJ("../models/Lab3_Ship.obj", shipVertices, shipNormals, shipFaces);
-    }
-
-    Camera camera = {glm::vec3(0, 0, -5), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0)};
-    const float cameraMovementSpeed = 0.1f;
+    Camera camera = {glm::vec3(0, 0, -250), glm::vec3(0, 0, -245), glm::vec3(0, 1, 0)};
+    const float cameraMovementSpeed = 0.75f;
     const float horizontalRotationSpeed = 0.02f;
 
     std::vector<glm::vec3> stars = generateStars();
 
-    std::vector<glm::vec3> VBO = setupVertexBufferObject(vertices, normals, faces);
+    std::vector<glm::vec3> VBO_sphere = setupVertexBufferObject(sphereVertices, sphereNormals, sphereFaces);
     std::vector<glm::vec3> VBO_ship = setupVertexBufferObject(shipVertices, shipNormals, shipFaces);
+
+    // Set up planets/stars
+    Planet* sun         = new Planet(VBO_sphere, glm::vec3(50), glm::vec3(0), starFragmentShader, 0.001f, 0.0f, 0.0f);
+    Planet* earth       = new Planet(VBO_sphere, glm::vec3(10), glm::vec3(80, 0, 0), earthPlanetFragmentShader, 0.05f, -0.007f, 80.0f);
+    Planet* moon        = new Planet(VBO_sphere, glm::vec3(2), glm::vec3(100, 2, 0), moonFragmentShader, 0.01f, 0.05f, 20.0f, earth->position);
+    Planet* gas_giant   = new Planet(VBO_sphere, glm::vec3(18), glm::vec3(120, 0, 0), stripedPlanetFragmentShader, 0.04f, 0.0005f, 120.0f);
 
     float rotation = 0.0f;
     float moonRotation = 0.0f;
@@ -241,26 +241,30 @@ int main() {
         uniforms.model = createModelMatrix(glm::vec3(1000), glm::vec3(0));
         drawStars(stars, uniforms);
 
-        // Render big planet
-        uniforms.model = createModelMatrix(glm::vec3(1), glm::vec3(0, 0, 0), rotation += 0.06f);
-        activeShader = earthPlanetFragmentShader;  // Set active shader to striped planet shader
-        render(VBO, camera);    // Big planet
-        
-        
-        // Render small planet
-        // Orbiting values
-        float orbitRadius = 1.5f;
-        float xPos = orbitRadius * std::cos(orbitAngle);
-        float zPos = orbitRadius * std::sin(orbitAngle);
+        // Render sun
+        uniforms.model = sun->getModelMatrix();
+        activeShader = sun->shader;
+        render(sun->vertexBufferObject, camera);
+        sun->update();
 
-        // New model matrix for small planet
-        uniforms.model = createModelMatrix(glm::vec3(0.4), glm::vec3(xPos, 0, zPos), moonRotation -= 0.4f);
+        // Render earth
+        uniforms.model = earth->getModelMatrix();
+        activeShader = earth->shader;
+        render(earth->vertexBufferObject, camera);
+        earth->update();
 
-        activeShader = moonFragmentShader;  // Set active shader to test fragment shader
-        render(VBO, camera);    // Small orbiting planet
+        // Render moon
+        uniforms.model = moon->getModelMatrix();
+        activeShader = moon->shader;
+        render(moon->vertexBufferObject, camera);
+        moon->orbitTarget = earth->position;
+        moon->update();
 
-        orbitAngle += 0.15f;    // Increase orbit angle
-
+        // Render gas giant
+        uniforms.model = gas_giant->getModelMatrix();
+        activeShader = gas_giant->shader;
+        render(gas_giant->vertexBufferObject, camera);
+        gas_giant->update();
 
         // Render ship
         glm::vec3 targetOffset = glm::vec3(0, 0.4, 0);
